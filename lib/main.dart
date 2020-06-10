@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:movie_assistant/ui/screens/home.dart';
+import 'package:movie_assistant/ui/screens/routes.dart';
 import 'package:movie_assistant/ui/themes/app_theme.dart';
 
 void main() => runApp(MyApp());
@@ -14,9 +15,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     
     return MaterialApp(
-      title: 'Welcome to Flutter',
+      home: Home(),
+      routes: appRoutes,
       theme: getAppTheme(context),
-      home: Home()
+      title: 'Vietant',
     );
   }
 }
