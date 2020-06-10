@@ -4,12 +4,12 @@ import 'dart:math';
 
 class Home extends StatelessWidget {
   final List<Tab> myTabs = <Tab>[
-    Tab(text: 'Popular Movies'),
+    Tab(text: 'Popular'),
     Tab(
-      text: 'Top Rated Movies',
+      text: 'Top Rated',
     ),
     Tab(
-      text: 'Upcoming Movies',
+      text: 'Upcoming',
     ),
   ];
 
