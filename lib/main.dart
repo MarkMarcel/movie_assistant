@@ -4,14 +4,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:movie_assistant/ui/screens/home.dart';
+import 'package:movie_assistant/ui/screens/list_notifier.dart';
 import 'package:movie_assistant/ui/screens/routes.dart';
 import 'package:movie_assistant/ui/themes/app_theme.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(
+  ChangeNotifierProvider(
+    create:(BuildContext context) => MovieListModel(),
+    child: MyApp(),
+    )
+);
 
-//Todo:lay out tabs
 class MyApp extends StatelessWidget {
-  @override
+ @override
   Widget build(BuildContext context) {
     
     return MaterialApp(
@@ -22,3 +28,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
