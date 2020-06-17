@@ -1,14 +1,4 @@
 import 'package:movie_assistant/models/genre.dart';
-import 'package:movie_assistant/ui/screens/list_notifier.dart';
-
-const jsonKeys = <String, String>{
-  'id': 'id',
-  'backdropPath': 'backdrop_path',
-  'genres': 'genre_ids',
-  'name': 'title',
-  'posterPath': 'poster_path',
-  'rating':'vote_average'
-};
 
 class Movie {
   int _id;
@@ -27,15 +17,6 @@ class Movie {
   Movie(
       this._id, this._backdropPath, this._genres, this._name, this._posterPath,this._rating);
 
-  factory Movie.fromJson(Map<dynamic, dynamic> json) {
-    return Movie(
-        json[jsonKeys['id']],
-        json[jsonKeys['backdropPath']],
-        getMovieGenres(json[jsonKeys['genres']]),
-        json[jsonKeys['name']],
-        json[jsonKeys['posterPath']],
-        json[jsonKeys['rating']],);
-  }
 
   @override
   bool operator ==(Object other) => identical(this, other);

@@ -1,7 +1,4 @@
-const _jsonKeys = <String, String>{
-  'id': 'id',
-  'name':'name'
-  };
+
 
 final Set<Genre> _genres = Set();
 Set<Genre> get genres => _genres;
@@ -19,11 +16,7 @@ class Genre {
   String get name => this._name;
 
   Genre(this._id, this._name);
-
-  Genre.fromJson(Map<String, dynamic> json)
-  :_id = json[_jsonKeys['id']],
-  _name = json[_jsonKeys['name']];
-
+  
   @override
   bool operator ==(Object other) => identical(this, other);
 

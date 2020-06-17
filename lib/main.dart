@@ -3,15 +3,15 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:movie_assistant/ui/screens/home.dart';
-import 'package:movie_assistant/ui/screens/list_notifier.dart';
+import 'package:movie_assistant/ui/app_state.dart';
+import 'package:movie_assistant/ui/screens/home/home.dart';
 import 'package:movie_assistant/ui/screens/routes.dart';
 import 'package:movie_assistant/ui/themes/app_theme.dart';
 import 'package:provider/provider.dart';
 
 void main() => runApp(
   ChangeNotifierProvider(
-    create:(BuildContext context) => MovieListModel(),
+    create:(BuildContext context) => AppState(),
     child: MyApp(),
     )
 );
@@ -19,7 +19,6 @@ void main() => runApp(
 class MyApp extends StatelessWidget {
  @override
   Widget build(BuildContext context) {
-    
     return MaterialApp(
       home: Home(),
       routes: appRoutes,
