@@ -40,10 +40,12 @@ Future<Image> getMovieBackdrop(String path) async{
 
 }
 
-Future<List<Movie>> getMoviesFromServer({MovieListType movieListType}) async{
+Future<List<Movie>> getMoviesFromServer({MovieListType movieListType,String search = ''}) async{
     if(_mainTmDbMovieGenreList.isEmpty) await _getGenres();
     switch(movieListType){
       case MovieListType.popular:return _getPopularMoviesFromServer();
+      break;
+      case MovieListType.search:return _searchMoviesOnServer(search);
       break;
       case MovieListType.topRated:return _getTopRatedMoviesFromServer();
       break;
@@ -69,6 +71,14 @@ Future<List<Movie>> _getTopRatedMoviesFromServer() async {
 
 Future<List<Movie>> _getUpcomingMoviesFromServer() async {
   const url = '${_v3BaseUrl}movie/upcoming';
+  final response = await http
+      .get(url, headers: {HttpHeaders.authorizationHeader: _authString});
+  return _processMovieResponse(response);
+}
+
+Future<List<Movie>> _searchMoviesOnServer(String search) async {
+  final query = Uri.encodeComponent(search);
+  final url = '${_v3BaseUrl}search/movie?query=$query';
   final response = await http
       .get(url, headers: {HttpHeaders.authorizationHeader: _authString});
   return _processMovieResponse(response);

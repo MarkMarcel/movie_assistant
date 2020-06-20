@@ -4,7 +4,7 @@ import 'package:movie_assistant/models/movie.dart';
 import 'package:movie_assistant/network/tmdb_api.dart';
 import 'package:movie_assistant/ui/app_state.dart';
 import 'package:movie_assistant/ui/custom_painters/home_movie_left_flank.dart';
-import 'package:movie_assistant/ui/custom_painters/home_movie_right.dart';
+import 'package:movie_assistant/ui/custom_painters/home_movie_right_flank.dart';
 import 'package:movie_assistant/ui/screens/home/home_view_model.dart';
 import 'dart:math';
 import 'package:provider/provider.dart';
@@ -21,6 +21,44 @@ final List<Tab> myTabs = <Tab>[
     text: 'Upcoming',
   ),
 ];
+
+class HomeAppBar extends StatelessWidget implements PreferredSizeWidget{
+  
+  HomeAppBar()
+  :preferredSize = Size.fromHeight(kToolbarHeight); //whenever needed  + (bottom?.preferredSize?.height ?? 0.0)
+  
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProxyProvider<AppState,HomeAppBarViewModel>(
+      create: (_) => HomeAppBarViewModel(),
+      update: (_,__,_homeAppBarViewModel) => _homeAppBarViewModel,
+      child: Consumer<HomeAppBarViewModel>(
+        builder: (_,_homeAppBarViewModel,__) => AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: _homeAppBarViewModel.isSearchMode? TextField(
+          decoration:InputDecoration(
+            hintText:'Search movies'
+          ),
+          textInputAction: TextInputAction.search,
+          onSubmitted: (text){
+            final _appState = Provider.of<AppState>(context,listen: false);
+            _appState.getMovies(movieListType: MovieListType.search,search: text);
+            _homeAppBarViewModel.leaveSearchMode();
+          },
+        ) : Text('Vietant',style: TextStyle(color:Theme.of(context).primaryColor),),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.search,color: Colors.grey,),
+             onPressed: (){_homeAppBarViewModel.enterSearchMode();})
+        ],
+      )),);
+  }
+
+  @override
+  final Size preferredSize;
+   
+}
 
 class Home extends StatelessWidget {
   @override
@@ -41,10 +79,8 @@ class Home extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text('Vietant'),
-      ),
+      backgroundColor: Colors.white,
+      appBar: HomeAppBar(),
       body: Container(
           padding: EdgeInsets.only(top: 16),
           child: Column(children: <Widget>[
@@ -107,6 +143,7 @@ class Home extends StatelessWidget {
         Expanded(
           child: PageView.builder(
               controller: _pageController,
+              itemCount: _homeViewModel.movies.length,
               itemBuilder: (context, index) =>
                   HomeMovie(_homeViewModel.movies[index])),
         )
@@ -127,7 +164,7 @@ class HomeMovie extends StatelessWidget {
     return Container(
         margin: EdgeInsets.only(top: 32),
         child: FutureBuilder<ui.Image>(
-            future: getMovieBackdrop(_movie.posterPath),
+            future: getMovieBackdrop(_movie.backdropPath),
             builder: (_, snapshot) {
               if (snapshot.connectionState == ConnectionState.done)
                 return Row(
@@ -139,7 +176,7 @@ class HomeMovie extends StatelessWidget {
                           child: Container(
                                     child: CustomPaint(
                                         painter: HomeMovieLeftFlank(
-                                            angle: pi / 6,
+                                            radius: 16,
                                             image: snapshot.data)),
                                     height: _imageHeight,
                                     width: 50,
@@ -155,7 +192,7 @@ class HomeMovie extends StatelessWidget {
                           child: Container(
                                     child: CustomPaint(
                                         painter: HomeMovieRightFlank(
-                                            angle: pi / 6,
+                                            radius: 16,
                                             image: snapshot.data)),
                                     height: _imageHeight,
                                     width: 50,
@@ -193,7 +230,7 @@ class HomeMovie extends StatelessWidget {
             margin: EdgeInsets.only(top: 16),
             child: Text(
               movie.name,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             )),
         Container(

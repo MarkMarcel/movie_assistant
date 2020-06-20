@@ -4,6 +4,7 @@ import 'package:movie_assistant/network/tmdb_api.dart';
 
 enum MovieListType{
   popular,
+  search,
   topRated,
   upcoming
 }
@@ -16,10 +17,10 @@ class AppState with ChangeNotifier{
     this.getMovies();
   }
 
-  getMovies({MovieListType movieListType}) async{
+  getMovies({MovieListType movieListType,String search}) async{
     _movies.clear();
     notifyListeners();
-    final movies = await getMoviesFromServer(movieListType:movieListType);
+    final movies = await getMoviesFromServer(movieListType:movieListType,search: search);
     _setMovies(movies);
   }
 

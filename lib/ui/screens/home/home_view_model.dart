@@ -3,6 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:movie_assistant/models/genre.dart';
 import 'package:movie_assistant/models/movie.dart';
 
+class HomeAppBarViewModel with ChangeNotifier{
+  var _isSearchMode = false;
+  bool get isSearchMode => _isSearchMode;
+
+  enterSearchMode(){
+    _isSearchMode = true;
+    notifyListeners();
+  }
+
+  leaveSearchMode(){
+    _isSearchMode = false;
+    notifyListeners();
+  }
+}
+
 class HomeViewModel with ChangeNotifier {
   final Set<Genre> _displayGenreList = Set();
   Set<Genre> get displayGenreList => _displayGenreList;

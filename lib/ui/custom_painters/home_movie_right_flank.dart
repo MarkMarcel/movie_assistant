@@ -2,15 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
-class HomeMovieLeftFlank extends CustomPainter {
-   double _angle;
+class HomeMovieRightFlank extends CustomPainter {
+  double _angle;
   Canvas _canvas;
   final ui.Image _image;
   Paint _paint;
   final double _radius;
   Size _size;
 
-  HomeMovieLeftFlank({@required double radius, @required image})
+  HomeMovieRightFlank({@required double radius, @required image})
       : _paint = Paint()
           ..isAntiAlias = true
           ..strokeWidth = 1
@@ -50,7 +50,7 @@ class HomeMovieLeftFlank extends CustomPainter {
     _transformCanvas();
     path.moveTo(anglePoints['first'].dx, anglePoints['first'].dy);
     path.lineTo(anglePoints['second'].dx, anglePoints['second'].dy);
-    path.arcTo(Rect.fromLTRB(-(_size.width+_radius), -_radius, 0, _radius), 0, pi, false);
+    path.arcTo(Rect.fromLTRB(0, -_radius, _size.width+_radius, _radius), -pi, -pi, false);
     path.lineTo(anglePoints['first'].dx, anglePoints['first'].dy);
 
     return path;
@@ -62,13 +62,13 @@ class HomeMovieLeftFlank extends CustomPainter {
 
   _transformCanvas(){
     final yTranslation = _size.height - _radius;
-    _canvas.translate(_size.width, yTranslation);
-    _canvas.rotate(-_angle);
+    _canvas.translate(0, yTranslation);
+    _canvas.rotate(_angle);
   }
 
   _resetCanvas(){
-    _canvas.rotate(_angle);
-    _canvas.translate(-_size.width, (
+    _canvas.rotate(-_angle);
+    _canvas.translate(0, (
     -(_size.height - _radius)));
   }
 
