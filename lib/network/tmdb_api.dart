@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'package:movie_assistant/models/genre.dart';
 import 'package:movie_assistant/models/movie.dart';
@@ -9,6 +10,7 @@ import 'package:movie_assistant/ui/app_state.dart';
 
 typedef GetMovieGenres = List<Genre> Function(dynamic);
 
+const backdropPath = 'http://image.tmdb.org/t/p/original/';
 const posterPath = 'http://image.tmdb.org/t/p/original/';
 const _token =
     'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzOGZmNTI5YjFkNjVhNWMxMDQzZjg2MmJmNzk0YTIxNCIsInN1YiI6IjVlZTE1ZmVhNGMxYmIwMDAxZWEzNjRhMyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.MRseAgIWSaHOOEu7ObcJ64URJH4cwjg6wrAeZBoVdx4';
@@ -26,6 +28,16 @@ Future<void> _getGenres() async {
   final genres =
         parsed.map<Genre>((json) => genreFromJson(json)).toList();
     _mainTmDbMovieGenreList.addAll(genres);
+}
+
+Future<Image> getMovieBackdrop(String path) async{
+    final url = '$backdropPath$path';
+    final response = await http.get(url);
+    final bytes = response.bodyBytes;
+    final codec = await instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    return frame.image;
+
 }
 
 Future<List<Movie>> getMoviesFromServer({MovieListType movieListType}) async{

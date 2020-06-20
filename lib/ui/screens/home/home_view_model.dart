@@ -4,19 +4,14 @@ import 'package:movie_assistant/models/genre.dart';
 import 'package:movie_assistant/models/movie.dart';
 
 class HomeViewModel with ChangeNotifier {
-  var _isLoading = true;
-  bool get isLoading => _isLoading;
   final Set<Genre> _displayGenreList = Set();
   Set<Genre> get displayGenreList => _displayGenreList;
-  final Set<Movie> _mainMovieList;
+  Set<Movie> _mainMovieList;
   List<Movie> _displayMovieList;
   List<Movie> get movies => this._displayMovieList;
   Set<int> _filterGenres = Set();
   Set<int> get filterGenres => _filterGenres;
 
-  HomeViewModel(this._mainMovieList){
-    _init();
-  }
 
  addFilterGenre(int genreId) {
     _filterGenres.add(genreId);
@@ -30,10 +25,12 @@ class HomeViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  _init() async {
+  update(Set<Movie> mainMovieList) async {
+    _mainMovieList = mainMovieList;
+    _filterGenres.clear();
     _setGenres();
     _displayMovieList = [..._mainMovieList];
-    _isLoading = _displayMovieList.isEmpty;
+    notifyListeners();
   }
 
   _filterMovies() {

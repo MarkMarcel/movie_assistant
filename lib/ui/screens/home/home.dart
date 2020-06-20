@@ -3,12 +3,13 @@ import 'package:movie_assistant/models/genre.dart';
 import 'package:movie_assistant/models/movie.dart';
 import 'package:movie_assistant/network/tmdb_api.dart';
 import 'package:movie_assistant/ui/app_state.dart';
+import 'package:movie_assistant/ui/custom_painters/home_movie_left_flank.dart';
 import 'package:movie_assistant/ui/custom_painters/home_movie_right.dart';
 import 'package:movie_assistant/ui/screens/home/home_view_model.dart';
 import 'dart:math';
 import 'package:provider/provider.dart';
+import 'dart:ui' as ui;
 
-CurrentMovieIndex _currentMovieIndex;
 const imageAndFlanksGutter = 16.0;
 const imageReversedAspectRatio = 4.0 / 3.0;
 final List<Tab> myTabs = <Tab>[
@@ -24,7 +25,7 @@ final List<Tab> myTabs = <Tab>[
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final _appState = Provider.of<AppState>(context,listen: false);
+    final _appState = Provider.of<AppState>(context, listen: false);
     _getMovies(int index) {
       switch (index) {
         case 0:
@@ -54,22 +55,27 @@ class Home extends StatelessWidget {
                   tabs: myTabs,
                   onTap: _getMovies,
                 )),
-                PageView(),
-            Consumer<AppState>(
-                builder: (context, appState, child) => ChangeNotifierProvider(
-                    create: (context) => HomeViewModel(appState.movies),
-                    builder: (context,_) => appState.movies.isEmpty
-                        ? _getIndicator()
-                        : _getMainContent(context)))
+            ChangeNotifierProxyProvider<AppState, HomeViewModel>(
+              create: (_) => HomeViewModel(),
+              update: (_, _appState, _homeViewModel) =>
+                  _homeViewModel..update(_appState.movies),
+              child: Consumer<HomeViewModel>(
+                  builder: (context, homeViewModel, child) =>
+                      homeViewModel.movies.isEmpty
+                          ? _getIndicator()
+                          : _getMainContent(context)),
+            )
           ])),
     );
   }
 
-  _getIndicator() => Expanded(child: Center(child: CircularProgressIndicator()));
+  Widget _getIndicator() =>
+      Expanded(child: Center(child: CircularProgressIndicator()));
 
-  _getMainContent(BuildContext context) {
+  Widget _getMainContent(BuildContext context) {
+    // if builder gets called why doesn't this change
     final _homeViewModel = Provider.of<HomeViewModel>(context);
-    _currentMovieIndex = CurrentMovieIndex(0, _homeViewModel.movies.length - 1);
+    final _pageController = PageController();
 
     Widget _addGenreBuilder(Genre genre) => Container(
         margin: EdgeInsets.only(right: 16),
@@ -86,72 +92,78 @@ class Home extends StatelessWidget {
           },
         ));
 
-    return Column(children: <Widget>[
-      Container(
-          alignment: Alignment.center,
-          constraints: BoxConstraints(maxHeight: 60),
-          margin: EdgeInsets.only(top: 24),
-          child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _homeViewModel.displayGenreList.length,
-              itemBuilder: (BuildContext context, int index) =>
-                  _addGenreBuilder(
-                      _homeViewModel.displayGenreList.toList()[index]))),
-      ValueListenableBuilder(
-        valueListenable: _currentMovieIndex,
-        builder: (context, value, child) => HomeMovie(_homeViewModel),
-      ),
-    ]);
+    return Expanded(
+      child: Column(children: <Widget>[
+        Container(
+            alignment: Alignment.center,
+            constraints: BoxConstraints(maxHeight: 60),
+            margin: EdgeInsets.only(top: 24),
+            child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _homeViewModel.displayGenreList.length,
+                itemBuilder: (BuildContext context, int index) =>
+                    _addGenreBuilder(
+                        _homeViewModel.displayGenreList.toList()[index]))),
+        Expanded(
+          child: PageView.builder(
+              controller: _pageController,
+              itemBuilder: (context, index) =>
+                  HomeMovie(_homeViewModel.movies[index])),
+        )
+      ]),
+    );
   }
 }
 
 class HomeMovie extends StatelessWidget {
-  final HomeViewModel _movieList;
-  HomeMovie(this._movieList);
+  final Movie _movie;
+  HomeMovie(this._movie);
 
   @override
   Widget build(BuildContext context) {
     final _screenWidth = MediaQuery.of(context).size.width;
     final _imageHeight = _getImageHeight(_screenWidth);
-    final movie = _movieList.movies.toList()[_currentMovieIndex.value];
 
     return Container(
         margin: EdgeInsets.only(top: 32),
-        child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                  flex: 1,
-                  child: Container(
-                    height: _imageHeight,
-                    clipBehavior: Clip.antiAlias,
-                    transform: Matrix4.tryInvert(Matrix4.rotationZ(-0.12)),
-                    decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(32),
-                        image: DecorationImage(
-                            fit: BoxFit.fitHeight,
-                            image: NetworkImage(
-                                '$posterPath${movie.backdropPath}'))),
-                  )),
-              SizedBox(width: imageAndFlanksGutter),
-              Expanded(
-                  flex: 7,
-                  child: _addMovieBuilder(context, movie, _imageHeight)),
-              SizedBox(width: imageAndFlanksGutter),
-              Expanded(
-                flex: 1,
-                child: Container(
-                  child: CustomPaint(
-                      painter: MovieRight(
-                          angle: pi / 6,
-                          color: Theme.of(context).primaryColor)),
-                  height: _imageHeight,
-                  width: 50,
-                ),
-              )
-            ]));
+        child: FutureBuilder<ui.Image>(
+            future: getMovieBackdrop(_movie.posterPath),
+            builder: (_, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done)
+                return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                          flex: 1,
+                          child: Container(
+                                    child: CustomPaint(
+                                        painter: HomeMovieLeftFlank(
+                                            angle: pi / 6,
+                                            image: snapshot.data)),
+                                    height: _imageHeight,
+                                    width: 50,
+                                  )),
+                      SizedBox(width: imageAndFlanksGutter),
+                      Expanded(
+                          flex: 5,
+                          child:
+                              _addMovieBuilder(context, _movie, _imageHeight)),
+                      SizedBox(width: imageAndFlanksGutter),
+                      Expanded(
+                          flex: 1,
+                          child: Container(
+                                    child: CustomPaint(
+                                        painter: HomeMovieRightFlank(
+                                            angle: pi / 6,
+                                            image: snapshot.data)),
+                                    height: _imageHeight,
+                                    width: 50,
+                                  ))
+                    ]);
+              else
+                return Center(child: Text('loading'));
+            }));
   }
 
   Widget _addMovieBuilder(
@@ -160,37 +172,28 @@ class HomeMovie extends StatelessWidget {
       children: <Widget>[
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, '/movie'),
-          child: Dismissible(
-              key: Key('${movie.id}'),
-              background: Text('Previous'),
-              dismissThresholds: {
-                DismissDirection.endToStart: 2,
-                DismissDirection.startToEnd: 2
-              },
-              onDismissed: (direction) {
-                if (direction == DismissDirection.startToEnd) {
-                  _currentMovieIndex.previousMovie();
-                }
-                if (direction == DismissDirection.endToStart) {
-                  _currentMovieIndex.nextMovie();
-                }
-              },
-              secondaryBackground: Text('Next'),
-              child: Container(
-                height: _imageHeight,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        fit: BoxFit.fill,
-                        image: NetworkImage('$posterPath${movie.posterPath}')),
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(32)),
-              )),
+          child: Container(
+            height: _imageHeight,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                    color: Colors.grey,
+                    offset: Offset(0, 4),
+                    blurRadius: 3 * pi,
+                    spreadRadius: pi / 24)
+              ],
+              image: DecorationImage(
+                  fit: BoxFit.fill,
+                  image: NetworkImage('$posterPath${movie.posterPath}')),
+            ),
+          ),
         ),
         Container(
             margin: EdgeInsets.only(top: 16),
             child: Text(
               movie.name,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             )),
         Container(
@@ -198,11 +201,15 @@ class HomeMovie extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(Icons.star, color: Colors.yellow),
+                Icon(
+                  Icons.star,
+                  color: Colors.yellow,
+                  size: 18,
+                ),
                 Text(
                   '${movie.rating}',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 15,
                   ),
                 )
               ],
