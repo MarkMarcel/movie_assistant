@@ -34,7 +34,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget{
       update: (_,__,_homeAppBarViewModel) => _homeAppBarViewModel,
       child: Consumer<HomeAppBarViewModel>(
         builder: (_,_homeAppBarViewModel,__) => AppBar(
-        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color:Colors.grey),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: _homeAppBarViewModel.isSearchMode? TextField(
           decoration:InputDecoration(
@@ -64,6 +65,16 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _appState = Provider.of<AppState>(context, listen: false);
+    Widget _getDrawer(){
+      return Drawer(
+        child: ListView(
+          children:<Widget>[
+            DrawerHeader(child: Center(child: Text("The Movies You Love"),))
+          ]
+        )
+      );
+    }
+
     _getMovies(int index) {
       switch (index) {
         case 0:
@@ -78,9 +89,11 @@ class Home extends StatelessWidget {
       }
     }
 
+
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: HomeAppBar(),
+      drawer: _getDrawer(),
       body: Container(
           padding: EdgeInsets.only(top: 16),
           child: Column(children: <Widget>[

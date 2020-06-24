@@ -8,7 +8,9 @@ import 'package:movie_assistant/network/json_conversions/genre_json_conversions.
 import 'package:movie_assistant/network/json_conversions/movie_json_conversions.dart';
 import 'package:movie_assistant/ui/app_state.dart';
 
-typedef GetMovieGenres = List<Genre> Function(dynamic);
+typedef GetMovieGenresFromIdsArray = List<Genre> Function(List<dynamic>);
+typedef GetMovieGenresFromObjectArray = List<Genre> Function(List<dynamic>);
+typedef GetMoviePGRating = String Function(Map<String,dynamic>,String);
 
 const backdropPath = 'http://image.tmdb.org/t/p/original/';
 const posterPath = 'http://image.tmdb.org/t/p/original/';
@@ -25,41 +27,55 @@ Future<void> _getGenres() async {
   final response = await http
       .get(url, headers: {HttpHeaders.authorizationHeader: _authString});
   final parsed = jsonDecode(response.body)['genres'];
-  final genres =
-        parsed.map<Genre>((json) => genreFromJson(json)).toList();
-    _mainTmDbMovieGenreList.addAll(genres);
+  final genres = parsed.map<Genre>((json) => genreFromJson(json)).toList();
+  _mainTmDbMovieGenreList.addAll(genres);
 }
 
-Future<Image> getMovieBackdrop(String path) async{
-    final url = '$backdropPath$path';
-    final response = await http.get(url);
-    final bytes = response.bodyBytes;
-    final codec = await instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    return frame.image;
-
+Future<Image> getMovieBackdrop(String path) async {
+  final url = '$backdropPath$path';
+  final response = await http.get(url);
+  final bytes = response.bodyBytes;
+  final codec = await instantiateImageCodec(bytes);
+  final frame = await codec.getNextFrame();
+  return frame.image;
 }
 
-Future<List<Movie>> getMoviesFromServer({MovieListType movieListType,String search = ''}) async{
-    if(_mainTmDbMovieGenreList.isEmpty) await _getGenres();
-    switch(movieListType){
-      case MovieListType.popular:return _getPopularMoviesFromServer();
+Future<Movie> getMovieDetails(int id) async {
+  final url = '${_v3BaseUrl}movie/$id?append_to_response=release_dates,credits';
+  final response = await http
+      .get(url, headers: {HttpHeaders.authorizationHeader: _authString});
+  final parsed = jsonDecode(response.body);
+  return movieFromDetailsJson(parsed,_getMovieGenresFromObjectsArray,_getMoviePGRating);
+}
+
+Future<List<Movie>> getMoviesFromServer(
+    {MovieListType movieListType, String search = ''}) async {
+  if (_mainTmDbMovieGenreList.isEmpty) await _getGenres();
+  switch (movieListType) {
+    case MovieListType.popular:
+      return _getPopularMoviesFromServer();
       break;
-      case MovieListType.search:return _searchMoviesOnServer(search);
+    case MovieListType.search:
+      return _searchMoviesOnServer(search);
       break;
-      case MovieListType.topRated:return _getTopRatedMoviesFromServer();
+    case MovieListType.topRated:
+      return _getTopRatedMoviesFromServer();
       break;
-      case MovieListType.upcoming:return _getUpcomingMoviesFromServer();
+    case MovieListType.upcoming:
+      return _getUpcomingMoviesFromServer();
       break;
-      default: return _getPopularMoviesFromServer();
-    }
+    default:
+      return _getPopularMoviesFromServer();
+  }
 }
 
 Future<List<Movie>> _getPopularMoviesFromServer() async {
   const url = '${_v3BaseUrl}movie/popular';
   final response = await http
       .get(url, headers: {HttpHeaders.authorizationHeader: _authString});
-  return _processMovieResponse(response);
+  final movies = _processMovieResponse(response);
+  test(movies[10].id);
+  return movies;
 }
 
 Future<List<Movie>> _getTopRatedMoviesFromServer() async {
@@ -84,15 +100,34 @@ Future<List<Movie>> _searchMoviesOnServer(String search) async {
   return _processMovieResponse(response);
 }
 
-List<Movie> _processMovieResponse(dynamic response){
+List<Movie> _processMovieResponse(dynamic response) {
   final parsed = jsonDecode(response.body)['results'];
-  final movies =
-        parsed.map<Movie>((json) => movieFromJson(json,_getMovieGenres)).toList();
-  return movies;  
+  final movies = parsed
+      .map<Movie>((json) => movieFromJson(json, _getMovieGenresFromIdsArray))
+      .toList();   
+  return movies;
 }
 
-List<Genre> _getMovieGenres(jsonArray) {
+List<Genre> _getMovieGenresFromIdsArray(List<dynamic> jsonArray) {
   final movieGenres = jsonArray.map<Genre>(
       (id) => _mainTmDbMovieGenreList.firstWhere((genre) => genre.id == id));
   return movieGenres.toList();
+}
+
+List<Genre> _getMovieGenresFromObjectsArray(List<dynamic> jsonArray) {
+  final genres = jsonArray.map<Genre>((json) => genreFromJson(json)).toList();
+  return genres;
+}
+
+String _getMoviePGRating(Map<String,dynamic> releaseDatesJson,String key){
+   final List<dynamic> resultsJsonArray = releaseDatesJson['results'];
+   final  uSReleaseDate = resultsJsonArray.where((json) => json['iso_3166_1'] == 'US');
+   final found = [...uSReleaseDate];
+   final  rating = (found[0] as Map<String,dynamic>)['release_dates'][0][key];
+   return rating;
+}
+
+test(id) async{
+  final movie = await getMovieDetails(id);
+  print(movie);
 }

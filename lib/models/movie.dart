@@ -1,29 +1,39 @@
+import 'package:movie_assistant/models/cast.crew.dart';
 import 'package:movie_assistant/models/genre.dart';
 
 class Movie {
-  int _id;
-  int get id => this._id;
-  String _backdropPath;
-  String get backdropPath => this._backdropPath;
-  List<Genre> _genres;
-  List<Genre> get genres => this._genres;
-  String _name;
-  String get name => this._name;
-  String _posterPath;
-  String get posterPath => this._posterPath;
-  num _rating;
-  num get rating => _rating;
+  final int id;
+  final String backdropPath;
+  final List<CastCrew> castAndCrew;
+  final List<Genre> genres;
+  final String name;
+  final String pgRating;
+  final String plot;
+  final String posterPath;
+  final num rating;
+  final String releaseDate;
+  final num runtime;
 
   Movie(
-      this._id, this._backdropPath, this._genres, this._name, this._posterPath,this._rating);
-
+    this.id,
+    this.backdropPath,
+    this.castAndCrew,
+    this.genres,
+    this.name,
+    this.pgRating,
+    this.posterPath,
+    this.plot,
+    this.rating,
+    this.releaseDate,
+    this.runtime,
+  );
 
   @override
   bool operator ==(Object other) => identical(this, other);
 
   @override
-  int get hashCode => _id;
+  int get hashCode => id;
 
   @override
-  String toString() => '$id $name $posterPath';
+  String toString() => '$id $name';
 }
